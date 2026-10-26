@@ -50,5 +50,8 @@ export function buildOpencodeConfig(models: string[], model: string, platform: P
     },
     model: `${PROVIDER_ID}/${chosen}`,
     small_model: `${PROVIDER_ID}/${chosen}`,
+    // The binary is pinned and hash-checked; it must not update itself or upload sessions.
+    autoupdate: false,
+    share: "disabled",
   });
 }

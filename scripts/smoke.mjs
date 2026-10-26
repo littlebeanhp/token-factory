@@ -1,5 +1,5 @@
 // Smoke test: download the pinned opencode binary for this machine and check
-// that it loads the FPT Token Factory config. Runs in CI on every opencode bump.
+// that it loads the FPT Token Factory config. Run it manually after changing opencode.version.json.
 // Usage: node scripts/smoke.mjs   (set FPT_API_KEY to also send a real prompt)
 import * as esbuild from "esbuild";
 import { execFileSync } from "node:child_process";

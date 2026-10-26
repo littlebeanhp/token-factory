@@ -112,8 +112,10 @@ class Panel implements vscode.WebviewViewProvider {
       case "platform":
         return this.ctx.globalState.update(PLATFORM_KEY, resolvePlatform(msg.platform));
       case "lang":
+        if (msg.lang !== "auto" && !LANGS.includes(msg.lang)) return;
         return this.cfg.update("language", msg.lang, vscode.ConfigurationTarget.Global);
       case "model":
+        if (!this.models().includes(msg.model)) return;
         return this.cfg.update("model", msg.model, vscode.ConfigurationTarget.Global);
       case "open":
         return this.openAgent();

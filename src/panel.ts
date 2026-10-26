@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type { STRINGS } from "./i18n";
 
 type Props = {
@@ -16,10 +17,7 @@ const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 function nonce() {
-  let s = "";
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) s += chars[Math.floor(Math.random() * chars.length)];
-  return s;
+  return randomBytes(24).toString("base64url");
 }
 
 export function renderPanel(p: Props): string {

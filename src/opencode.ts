@@ -2,12 +2,16 @@
 // Source: the platform packages that the `opencode-ai` npm package itself uses.
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as crypto from "node:crypto";
 import * as https from "node:https";
 import { pipeline } from "node:stream/promises";
+import { Transform } from "node:stream";
 import * as tar from "tar";
 import pinned from "../opencode.version.json";
 
 export const OPENCODE_VERSION: string = pinned.version;
+// sha512 of each platform tarball, pinned together with the version.
+const INTEGRITY: Record<string, string> = pinned.integrity;
 
 function isMusl(): boolean {
   if (process.platform !== "linux") return false;
@@ -84,7 +88,27 @@ export async function ensureOpencode(storageDir: string, onProgress?: (pct: numb
   });
 
   try {
-    await pipeline(res, tar.x({ cwd: tmp, strip: 1 }));
+    // Fail closed: the binary receives the API key, so only run a tarball whose
+    // hash matches the one pinned in opencode.version.json.
+    const expected = INTEGRITY[pkg];
+    if (!expected?.startsWith("sha512-")) throw new Error(`No pinned integrity for ${pkg}`);
+    const hash = crypto.createHash("sha512");
+    const tgz = path.join(tmp, "package.tgz");
+    await pipeline(
+      res,
+      new Transform({
+        transform(chunk, _enc, cb) {
+          hash.update(chunk);
+          cb(null, chunk);
+        },
+      }),
+      fs.createWriteStream(tgz),
+    );
+    if (`sha512-${hash.digest("base64")}` !== expected) {
+      throw new Error(`Integrity check failed for ${pkg}@${OPENCODE_VERSION}`);
+    }
+    await tar.x({ file: tgz, cwd: tmp, strip: 1 });
+    fs.rmSync(tgz, { force: true });
     const extracted = path.join(tmp, "bin", binaryName());
     if (!fs.existsSync(extracted)) throw new Error(`Binary not found in ${pkg}`);
     if (process.platform !== "win32") fs.chmodSync(extracted, 0o755);
