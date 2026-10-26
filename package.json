@@ -1,0 +1,109 @@
+{
+  "name": "token-factory",
+  "displayName": "Token Factory",
+  "description": "Code / Cowork agent powered by opencode, preconfigured for FPT Token Factory. Paste your API key and start.",
+  "version": "0.1.0",
+  "publisher": "fpt",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "fpt",
+    "token factory",
+    "opencode",
+    "agent",
+    "ai"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "tokenFactory",
+          "title": "Token Factory",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "tokenFactory": [
+        {
+          "type": "webview",
+          "id": "tokenFactory.panel",
+          "name": "Token Factory"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "tokenFactory.openAgent",
+        "title": "Token Factory: Open agent",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "tokenFactory.setApiKey",
+        "title": "Token Factory: Set API key"
+      },
+      {
+        "command": "tokenFactory.signOut",
+        "title": "Token Factory: Remove API key"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "tokenFactory.openAgent",
+        "key": "ctrl+escape",
+        "mac": "cmd+escape"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "tokenFactory.openAgent",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Token Factory",
+      "properties": {
+        "tokenFactory.language": {
+          "type": "string",
+          "enum": ["auto", "en", "vi", "ms", "ru", "ja"],
+          "enumDescriptions": ["Follow VS Code", "English", "Tiếng Việt", "Bahasa Melayu", "Русский", "日本語"],
+          "default": "auto",
+          "description": "Language of the Token Factory panel."
+        },
+        "tokenFactory.model": {
+          "type": "string",
+          "default": "",
+          "description": "Model ID to use. Leave empty for the default model."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "vscode:prepublish": "npm run typecheck && node esbuild.mjs --production",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.0",
+    "tar": "^7.5.0",
+    "typescript": "^5.9.0"
+  }
+}

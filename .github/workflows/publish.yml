@@ -1,0 +1,24 @@
+name: Publish
+
+# Push a tag like v0.2.0 to publish to the VS Code Marketplace and Open VSX.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx vsce package -o token-factory.vsix
+      - run: npx vsce publish --packagePath token-factory.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - run: npx ovsx publish token-factory.vsix
+        if: env.OVSX_PAT != ''
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
