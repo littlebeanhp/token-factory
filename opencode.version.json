@@ -1,3 +1,13 @@
 {
-  "version": "1.19.4"
+  "version": "1.19.4",
+  "integrity": {
+    "opencode-linux-x64": "sha512-rQ/l3jmJoxf8ZYnBargg9alURlz6buEilysGODtzkcmcYtcZ91LOgF034oUUHHQl8/y1hbRTDvg6ujqUjQsMXw==",
+    "opencode-linux-arm64": "sha512-bA/QpgwRgv20xVay0b4EGo3IjMQQl4GbODjhXWGUvovoJYYyFosueox2aLASxTbHK6oP1zpUxaZRFhgNrhhfgA==",
+    "opencode-linux-x64-musl": "sha512-SW/DNSbM2fjLN2q1IfPHgWTNSpQ8TgXjRUVNLc1VWlgKROfizpPTtWmjGWmxie2nZVuBcSVw/RlQE3ulgA8vVA==",
+    "opencode-linux-arm64-musl": "sha512-Sn41KddzgT+UBXtwuOR7/4X4ww8xOIEaw1bS74X0cO+BBgj7EY28gSRN4DNSJatXdDRJhDvhmNebWxly/cfYCw==",
+    "opencode-darwin-x64": "sha512-ILgql0oUVdZeWnWVGsv5by/gPeY9ytYS5KTCQSoxgo0H1TzbnNMSd+IAn9dHL1H4XSZBtgPTfdMK9r1sWPbYbA==",
+    "opencode-darwin-arm64": "sha512-31sy6eA88QO2vXra395rPxe995a2G0IKKAqm7B/ZESwIGVK9auMdYfKd7mf5icI72oFMLUwRJGQ1f4B/ykbDJg==",
+    "opencode-windows-x64": "sha512-Rr5k+esRBsEBGCjqjVwvFpybQMmDO18Hu5vlBWGj4m0aMMoeR/m+qcW/tJGIKhQXy7Mu31izTn60LXjDMwfFAg==",
+    "opencode-windows-arm64": "sha512-4rY75jyh4A/q0eIWLzo3g4yigWceRLdFUpb49hHeGFJgEXjNIWWT0P+OUzYcA3EQeJtTyRcIlLOjFqr+AeMi1Q=="
+  }
 }
