@@ -1,20 +1,24 @@
 # Token Factory
 
-A ready-to-use Code / Cowork agent for VS Code, powered by [opencode](https://opencode.ai) and preconfigured for **FPT Token Factory**.
+A ready-to-use Code / Cowork agent for VS Code, powered by [opencode](https://opencode.ai) and preconfigured for **FPT AI Factory**.
 
 ## Get started
 
 1. Install the extension.
 2. Click the Token Factory icon in the activity bar.
-3. Enter your FPT Token API key and click **Connect**.
+3. Enter your FPT AI Factory API key and click **Connect**.
 4. Click **Open agent** (or press `Ctrl+Esc` / `Cmd+Esc`).
 
-There's nothing else to install or configure. On first use the extension downloads the official opencode binary for your system, and every session already points at FPT Token Factory with the latest models (GLM-5.3, DeepSeek).
+There's nothing else to install or configure. On first use the extension downloads the official opencode binary for your system, and every session already points at FPT AI Factory with the latest models (GLM-5.3, DeepSeek).
+
+### Behind a proxy
+
+Tick **Use a proxy** under the API key and enter your proxy server, for example `10.0.0.1:8080` (or `user:password@10.0.0.1:8080`). The key check, the opencode download and the agent all go through it. Leave it unticked to connect directly.
 
 ## Features
 
 - Code / Cowork agent, wrapped with opencode
-- FPT Token Factory as the default provider
+- FPT AI Factory as the default provider
 - Latest models, with the list read live from your account
 - Panel in English, Tiếng Việt, Bahasa Melayu, Русский and 日本語
 
@@ -27,7 +31,7 @@ There's nothing else to install or configure. On first use the extension downloa
 
 ## Privacy
 
-Your API key is stored in VS Code's secure storage (your OS keychain). It's passed only to the local opencode process and sent only to FPT Token Factory.
+Your API key is stored in VS Code's secure storage (your OS keychain). It's passed only to the local opencode process and sent only to FPT AI Factory.
 
 For managed machines, IT can set the `FPT_API_KEY` environment variable instead and users skip the key step.
 

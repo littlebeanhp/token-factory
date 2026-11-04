@@ -1,9 +1,9 @@
 {
   "name": "token-factory",
   "displayName": "Token Factory",
-  "description": "Code / Cowork agent powered by opencode, preconfigured for FPT Token Factory. Paste your API key and start.",
-  "version": "0.1.0",
-  "publisher": "fpt",
+  "description": "Code / Cowork agent powered by opencode, preconfigured for FPT AI Factory. Paste your API key and start.",
+  "version": "0.1.1",
+  "publisher": "FPTAIFACTORY",
   "license": "MIT",
   "icon": "media/icon.png",
   "engines": {
@@ -16,7 +16,7 @@
   ],
   "keywords": [
     "fpt",
-    "token factory",
+    "ai factory",
     "opencode",
     "agent",
     "ai"

@@ -1,4 +1,5 @@
 import type { STRINGS } from "./i18n";
+import { proxyHost } from "./proxy";
 
 type Props = {
   cspSource: string;
@@ -10,6 +11,7 @@ type Props = {
   model: string;
   platforms: { id: string; name: string }[];
   platform: string;
+  proxy: string;
 };
 
 const esc = (s: string) =>
@@ -35,6 +37,11 @@ export function renderPanel(p: Props): string {
     <select id="platform">${p.platforms.map((x) => `<option value="${esc(x.id)}"${x.id === p.platform ? " selected" : ""}>${esc(x.name)}</option>`).join("")}</select>
     <label for="key">${esc(t.keyLabel)}</label>
     <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…" />
+    <label class="check"><input id="useProxy" type="checkbox"${p.proxy ? " checked" : ""} /> ${esc(t.useProxy)}</label>
+    <div id="proxyBox"${p.proxy ? "" : " hidden"}>
+      <label for="proxy">${esc(t.proxyLabel)}</label>
+      <input id="proxy" type="text" autocomplete="off" spellcheck="false" placeholder="10.0.0.1:8080" value="${esc(p.proxy.replace(/^http:\/\//, ""))}" />
+    </div>
     <p id="err" class="err" role="alert"></p>
     <button id="connect" class="primary">${esc(t.connect)}</button>
     <p class="muted">${esc(t.noKey)} <a href="#" id="getkey">${esc(t.getKey)}</a></p>
@@ -48,6 +55,7 @@ export function renderPanel(p: Props): string {
     <p class="badge">✓ ${esc(t.connected)}</p>
     <label for="model">${esc(t.model)}</label>
     <select id="model">${options(p.models, p.model)}</select>
+    ${p.proxy ? `<p class="muted proxy">${esc(t.viaProxy)}: ${esc(proxyHost(p.proxy))}</p>` : ""}
     <button id="open" class="primary">${esc(t.openAgent)}</button>
     <button id="change" class="link">${esc(t.changeKey)}</button>`;
 
@@ -78,6 +86,10 @@ export function renderPanel(p: Props): string {
   .ticks li { position: relative; padding-left: 20px; margin-bottom: 6px; }
   .ticks li::before { content: "✓"; position: absolute; left: 2px; color: var(--vscode-testing-iconPassed, #3fb950); }
   .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; margin: 8px 0 14px; color: var(--vscode-testing-iconPassed, #3fb950); border: 1px solid currentColor; }
+  .check { display: flex; align-items: center; gap: 6px; margin: 10px 0 8px; color: var(--vscode-foreground); cursor: pointer; }
+  .check input { width: auto; margin: 0; }
+  [hidden] { display: none !important; }
+  .proxy { margin: 0 0 12px; }
   .top { display: flex; justify-content: flex-end; }
   .top select { width: auto; margin: 0; padding: 2px 4px; font-size: 12px; }
 </style>
@@ -97,11 +109,16 @@ export function renderPanel(p: Props): string {
       if (!key) { $("err").textContent = ${JSON.stringify(t.errEmpty)}; return; }
       $("connect").disabled = true;
       $("connect").textContent = ${JSON.stringify(t.checking)};
-      vscode.postMessage({ type: "connect", key, platform: $("platform").value });
+      const useProxy = $("useProxy").checked, proxy = $("proxy").value.trim();
+      if (useProxy && !proxy) { $("err").textContent = ${JSON.stringify(t.errProxy)}; $("proxy").focus(); return; }
+      vscode.postMessage({ type: "connect", key, platform: $("platform").value, proxy: useProxy ? proxy : "" });
     };
     $("connect").onclick = go;
     $("key").onkeydown = (e) => { if (e.key === "Enter") go(); };
     $("key").oninput = () => { $("err").textContent = ""; };
+    $("useProxy").onchange = (e) => { $("proxyBox").hidden = !e.target.checked; $("err").textContent = ""; if (e.target.checked) $("proxy").focus(); };
+    $("proxy").onkeydown = (e) => { if (e.key === "Enter") go(); };
+    $("proxy").oninput = () => { $("err").textContent = ""; };
     $("getkey").onclick = (e) => { e.preventDefault(); vscode.postMessage({ type: "link", platform: $("platform").value }); };
     $("platform").onchange = (e) => { $("err").textContent = ""; vscode.postMessage({ type: "platform", platform: e.target.value }); };
     window.addEventListener("message", (e) => {

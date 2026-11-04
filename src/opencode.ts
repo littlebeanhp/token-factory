@@ -6,6 +6,7 @@ import * as https from "node:https";
 import { pipeline } from "node:stream/promises";
 import * as tar from "tar";
 import pinned from "../opencode.version.json";
+import { getViaProxy } from "./proxy";
 
 export const OPENCODE_VERSION: string = pinned.version;
 
@@ -35,22 +36,23 @@ function binaryName(): string {
   return process.platform === "win32" ? "opencode.exe" : "opencode";
 }
 
-function get(url: string, redirects = 5): Promise<import("node:http").IncomingMessage> {
+function get(url: string, redirects = 5, proxy = ""): Promise<import("node:http").IncomingMessage> {
   return new Promise((resolve, reject) => {
-    https
-      .get(url, { headers: { "User-Agent": "token-factory-vscode" } }, (res) => {
-        const code = res.statusCode ?? 0;
-        if (code >= 300 && code < 400 && res.headers.location && redirects > 0) {
-          res.resume();
-          resolve(get(new URL(res.headers.location, url).toString(), redirects - 1));
-        } else if (code !== 200) {
-          res.resume();
-          reject(new Error(`Download failed (${code}) for ${url}`));
-        } else {
-          resolve(res);
-        }
-      })
-      .on("error", reject);
+    const onResponse = (res: import("node:http").IncomingMessage) => {
+      const code = res.statusCode ?? 0;
+      if (code >= 300 && code < 400 && res.headers.location && redirects > 0) {
+        res.resume();
+        resolve(get(new URL(res.headers.location, url).toString(), redirects - 1, proxy));
+      } else if (code !== 200) {
+        res.resume();
+        reject(new Error(`Download failed (${code}) for ${url}`));
+      } else {
+        resolve(res);
+      }
+    };
+    const headers = { "User-Agent": "token-factory-vscode" };
+    if (proxy) getViaProxy(url, headers, proxy).then(onResponse, reject);
+    else https.get(url, { headers }, onResponse).on("error", reject);
   });
 }
 
@@ -59,7 +61,11 @@ function get(url: string, redirects = 5): Promise<import("node:http").IncomingMe
  * Binaries are cached per version under the extension's global storage,
  * so bumping OPENCODE_VERSION fetches the new one automatically.
  */
-export async function ensureOpencode(storageDir: string, onProgress?: (pct: number) => void): Promise<string> {
+export async function ensureOpencode(
+  storageDir: string,
+  onProgress?: (pct: number) => void,
+  proxy = "",
+): Promise<string> {
   const pkg = platformPackage();
   const dir = path.join(storageDir, "opencode", `${OPENCODE_VERSION}-${pkg}`);
   const bin = path.join(dir, "bin", binaryName());
@@ -70,7 +76,7 @@ export async function ensureOpencode(storageDir: string, onProgress?: (pct: numb
   fs.mkdirSync(tmp, { recursive: true });
 
   const url = `https://registry.npmjs.org/${pkg}/-/${pkg}-${OPENCODE_VERSION}.tgz`;
-  const res = await get(url);
+  const res = await get(url, 5, proxy);
   const total = Number(res.headers["content-length"] ?? 0);
   let seen = 0;
   let lastPct = -1;

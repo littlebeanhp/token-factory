@@ -2,7 +2,7 @@
 // opencode itself is never modified.
 
 export const PROVIDER_ID = "fpt-token-factory";
-export const PROVIDER_NAME = "FPT Token Factory";
+export const PROVIDER_NAME = "FPT AI Factory";
 export const API_KEY_ENV = "FPT_API_KEY";
 
 export type PlatformId = "marketplace" | "neo";

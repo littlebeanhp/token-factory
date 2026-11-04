@@ -13,10 +13,12 @@ import {
 import { LANG_NAMES, LANGS, Lang, resolveLang, STRINGS } from "./i18n";
 import { ensureOpencode } from "./opencode";
 import { renderPanel } from "./panel";
+import { normalizeProxy, proxyEnv } from "./proxy";
 
 const SECRET_KEY = "tokenFactory.apiKey";
 const MODELS_KEY = "tokenFactory.models";
 const PLATFORM_KEY = "tokenFactory.platform";
+const PROXY_KEY = "tokenFactory.proxy";
 
 export function activate(context: vscode.ExtensionContext) {
   const panel = new Panel(context);
@@ -67,6 +69,11 @@ class Panel implements vscode.WebviewViewProvider {
     return resolvePlatform(this.ctx.globalState.get<string>(PLATFORM_KEY));
   }
 
+  /** Normalized proxy URL, or "" when "Use a proxy" is off. */
+  private proxy(): string {
+    return this.ctx.globalState.get<string>(PROXY_KEY, "");
+  }
+
   private models(): string[] {
     const saved = this.ctx.globalState.get<string[]>(MODELS_KEY, []);
     return saved.length ? saved : FALLBACK_MODELS;
@@ -98,6 +105,7 @@ class Panel implements vscode.WebviewViewProvider {
       model: this.model(),
       platforms: PLATFORM_IDS.map((id) => ({ id, name: PLATFORMS[id].name })),
       platform: this.platform(),
+      proxy: this.proxy(),
     });
   }
 
@@ -108,7 +116,7 @@ class Panel implements vscode.WebviewViewProvider {
   private async onMessage(msg: any) {
     switch (msg?.type) {
       case "connect":
-        return this.connect(String(msg.key ?? "").trim(), resolvePlatform(msg.platform));
+        return this.connect(String(msg.key ?? "").trim(), resolvePlatform(msg.platform), msg.proxy);
       case "platform":
         return this.ctx.globalState.update(PLATFORM_KEY, resolvePlatform(msg.platform));
       case "lang":
@@ -124,15 +132,21 @@ class Panel implements vscode.WebviewViewProvider {
     }
   }
 
-  private async connect(key: string, platform: PlatformId) {
+  /** `proxyInput` is what the panel sent ("" = off); undefined keeps the saved proxy (command palette flow). */
+  private async connect(key: string, platform: PlatformId, proxyInput?: unknown) {
     const t = this.t();
     if (!key) return this.post({ type: "error", text: t.errEmpty });
-    const result = await checkKey(key, platform);
+    const proxy = proxyInput === undefined ? this.proxy() : normalizeProxy(proxyInput);
+    if (proxy === null) return this.post({ type: "error", text: t.errProxy });
+    const result = await checkKey(key, platform, proxy);
     if (!result.ok) {
-      return this.post({ type: "error", text: result.reason === "invalid" ? t.errInvalid : t.errNetwork });
+      const text = result.reason === "invalid" ? t.errInvalid : result.reason === "proxy" ? t.errProxyNet : t.errNetwork;
+      return this.post({ type: "error", text });
     }
     await this.ctx.secrets.store(SECRET_KEY, key);
     await this.ctx.globalState.update(PLATFORM_KEY, platform);
+    await this.ctx.globalState.update(PROXY_KEY, proxy);
+    this.terminal?.dispose(); // a running agent keeps its old proxy env
     // Always replace: a stale list from the other platform must not linger.
     await this.ctx.globalState.update(MODELS_KEY, result.models);
     await this.refresh();
@@ -170,7 +184,7 @@ class Panel implements vscode.WebviewViewProvider {
             return ensureOpencode(this.ctx.globalStorageUri.fsPath, (pct) => {
               progress.report({ increment: pct - last, message: `${pct}%` });
               last = pct;
-            });
+            }, this.proxy());
           },
         ),
       );
@@ -209,6 +223,7 @@ class Panel implements vscode.WebviewViewProvider {
         OPENCODE_CONFIG_CONTENT: buildOpencodeConfig(this.models(), this.model(), this.platform()),
         [API_KEY_ENV]: key,
         OPENCODE_CALLER: "vscode",
+        ...proxyEnv(this.proxy()),
       },
     });
     this.terminal.show();
