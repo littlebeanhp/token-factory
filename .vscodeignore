@@ -9,3 +9,9 @@ tsconfig.json
 *.vsix
 .gitignore
 opencode.version.json
+.env
+.env.*
+*.pem
+*.key
+.npmrc
+*.log

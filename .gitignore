@@ -1,3 +1,32 @@
+# Build output
 node_modules/
 dist/
 *.vsix
+.vscode-test/
+*.tsbuildinfo
+
+# Secrets: API keys, tokens, certificates
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+.vsce-token
+secrets*.json
+*credentials*
+
+# Logs and local scratch
+*.log
+npm-debug.log*
+.tmp/
+tmp/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+.vscode/settings.json
