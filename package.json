@@ -2,9 +2,13 @@
   "name": "token-factory",
   "displayName": "Token Factory",
   "description": "Code / Cowork agent powered by opencode, preconfigured for FPT AI Factory. Paste your API key and start.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "FPTAIFACTORY",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/littlebeanhp/token-factory.git"
+  },
   "icon": "media/icon.png",
   "engines": {
     "vscode": "^1.90.0"

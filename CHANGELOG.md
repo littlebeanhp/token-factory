@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- Link the Marketplace listing to the GitHub repository
+
 ## 0.1.1
 
 - Optional HTTP proxy: tick **Use a proxy** and enter the proxy server's IP and port
