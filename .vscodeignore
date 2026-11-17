@@ -1,0 +1,26 @@
+src/**
+docs/**
+node_modules/**
+.github/**
+.vscode/**
+scripts/**
+**/*.map
+esbuild.mjs
+tsconfig.json
+*.vsix
+*.zip
+preview/**
+podman-compose.preview.vibeflow.yaml
+.vibeflow-preview.hash
+.gitignore
+opencode.version.json
+.env
+.env.*
+*.pem
+*.key
+.npmrc
+*.log
+# superseded brand asset, kept in the repo for reference only
+media/logo 01.svg
+RELEASE-NOTES-*.md
+*.xlsx
