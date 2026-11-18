@@ -11,12 +11,12 @@ export const PLATFORMS: Record<PlatformId, { name: string; baseUrl: string; getK
   marketplace: {
     name: "marketplace.fptcloud.com",
     baseUrl: "https://mkp-api.fptcloud.com/v1",
-    getKeyUrl: "https://marketplace.fptcloud.com",
+    getKeyUrl: "https://marketplace.fptcloud.com/en",
   },
   neo: {
     name: "neo.fpt.ai",
     baseUrl: "https://token-api.fpt.ai/v1",
-    getKeyUrl: "https://token-api.fpt.ai",
+    getKeyUrl: "https://neo.fpt.ai",
   },
 };
 export const PLATFORM_IDS = Object.keys(PLATFORMS) as PlatformId[];
@@ -28,7 +28,8 @@ export function resolvePlatform(id: unknown): PlatformId {
 
 // Used only when the live model list (GET /v1/models) can't be read.
 // Check these IDs against the real catalog before publishing.
-export const FALLBACK_MODELS = ["GLM-5.3", "DeepSeek-V4-Flash"];
+export const FALLBACK_MODELS = ["DeepSeek-V4.1-Flash", "GLM-5.3", "DeepSeek-V4-Flash"];
+// Must stay in FALLBACK_MODELS: buildOpencodeConfig() only accepts a model the list has.
 export const DEFAULT_MODEL = FALLBACK_MODELS[0];
 
 /** The opencode config injected through OPENCODE_CONFIG_CONTENT. */

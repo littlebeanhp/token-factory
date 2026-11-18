@@ -4,6 +4,8 @@ dist/
 *.vsix
 .vscode-test/
 *.tsbuildinfo
+preview/public/
+.vibeflow-preview.hash
 
 # Secrets: API keys, tokens, certificates
 .env

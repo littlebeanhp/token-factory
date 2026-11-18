@@ -16,13 +16,43 @@ const INTEGRITY: Record<string, string> = pinned.integrity;
 
 function isMusl(): boolean {
   if (process.platform !== "linux") return false;
+  const arch = process.arch === "arm64" ? "aarch64" : process.arch === "x64" ? "x86_64" : null;
+  if (!arch) return false;
+  // The dynamic loaders are the ground truth for what the kernel can exec here:
+  // glibc systems (Mint, Ubuntu, RHEL, ...) carry the glibc loader, musl systems
+  // (Alpine) carry the musl loader. A binary whose interpreter is missing fails
+  // with "execvp (3) failed: No such file or directory" - so this decides which
+  // platform package to download.
+  const muslLoader = `/lib/ld-musl-${arch}.so.1`;
+  const glibcLoaders = [
+    `/lib/${arch}-linux-gnu/ld-linux-${arch}.so.2`, // Debian/Ubuntu/Mint
+    `/lib64/ld-linux-${arch}.so.2`, // RHEL/Fedora/openSUSE
+    `/lib/ld-linux-${arch}.so.2`,
+  ];
+  const hasMusl = fs.existsSync(muslLoader);
+  const hasGlibc = glibcLoaders.some((p) => fs.existsSync(p));
+  if (hasMusl !== hasGlibc) return hasMusl;
+  // Both or neither (unusual): ask Node which libc it was linked against, then
+  // assume glibc - the common case.
   try {
-    // glibc systems report a glibc version here; musl systems don't.
     const report = (process as any).report?.getReport?.();
-    return !report?.header?.glibcVersionRuntime;
+    if (report?.header?.glibcVersionRuntime !== undefined) return !report.header.glibcVersionRuntime;
   } catch {
-    return fs.existsSync("/etc/alpine-release");
+    /* assume glibc */
   }
+  return false;
+}
+
+/** The other libc variant for this machine (Linux only): glibc <-> musl. */
+export function siblingPackage(pkg: string): string | undefined {
+  if (!pkg.startsWith("opencode-linux-")) return undefined;
+  return pkg.endsWith("-musl") ? pkg.slice(0, -"-musl".length) : `${pkg}-musl`;
+}
+
+/** The older-CPU build for this x64 package (no baseline exists for ARM64). */
+export function baselinePackage(pkg: string): string | undefined {
+  if (!pkg.includes("-x64")) return undefined;
+  return pkg.endsWith("-musl") ? `${pkg.slice(0, -"-musl".length)}-baseline-musl` : `${pkg}-baseline`;
 }
 
 /** npm package name for this OS/CPU, e.g. opencode-darwin-arm64. */
@@ -38,6 +68,29 @@ export function platformPackage(): string {
 
 function binaryName(): string {
   return process.platform === "win32" ? "opencode.exe" : "opencode";
+}
+
+/** The binary of one platform package, once downloaded. */
+export function packageBinPath(storageDir: string, pkg: string): string {
+  return path.join(storageDir, "opencode", `${OPENCODE_VERSION}-${pkg}`, "bin", binaryName());
+}
+
+/**
+ * Where the pinned binary lives once downloaded - does not touch the network.
+ * Prefers the detected variant, but falls back to a previously verified sibling
+ * (the glibc/musl guess was wrong) or baseline (the CPU is older than the
+ * standard build's instruction set) variant.
+ */
+export function opencodePath(storageDir: string): string {
+  const pkg = platformPackage();
+  const bin = packageBinPath(storageDir, pkg);
+  if (fs.existsSync(bin)) return bin;
+  for (const alt of [siblingPackage(pkg), baselinePackage(pkg)]) {
+    if (!alt) continue;
+    const p = packageBinPath(storageDir, alt);
+    if (fs.existsSync(p)) return p;
+  }
+  return bin;
 }
 
 function get(url: string, redirects = 5, proxy = ""): Promise<import("node:http").IncomingMessage> {
@@ -60,6 +113,20 @@ function get(url: string, redirects = 5, proxy = ""): Promise<import("node:http"
   });
 }
 
+/** Removes other versions' directories, keeping the sibling libc and baseline variants. */
+function cleanOldVersions(storageDir: string, pkg: string, keepDir: string) {
+  const root = path.join(storageDir, "opencode");
+  if (!fs.existsSync(root)) return;
+  const keep = new Set([keepDir]);
+  for (const alt of [siblingPackage(pkg), baselinePackage(pkg)]) {
+    if (alt) keep.add(path.join(root, `${OPENCODE_VERSION}-${alt}`));
+  }
+  for (const name of fs.readdirSync(root)) {
+    if (keep.has(path.join(root, name)) || name.includes(".part-")) continue;
+    fs.rmSync(path.join(root, name), { recursive: true, force: true });
+  }
+}
+
 /**
  * Returns the path of the opencode binary, downloading it on first use.
  * Binaries are cached per version under the extension's global storage,
@@ -67,13 +134,18 @@ function get(url: string, redirects = 5, proxy = ""): Promise<import("node:http"
  */
 export async function ensureOpencode(
   storageDir: string,
-  onProgress?: (pct: number) => void,
+  onProgress?: (pct: number, seen: number, total: number) => void,
   proxy = "",
+  pkg = platformPackage(),
 ): Promise<string> {
-  const pkg = platformPackage();
   const dir = path.join(storageDir, "opencode", `${OPENCODE_VERSION}-${pkg}`);
   const bin = path.join(dir, "bin", binaryName());
-  if (fs.existsSync(bin)) return bin;
+  if (fs.existsSync(bin)) {
+    // Current binary is in place: reclaim older versions. When it is not, leave
+    // them alone - a failed download must not delete the last working copy.
+    cleanOldVersions(storageDir, pkg, dir);
+    return bin;
+  }
 
   const tmp = `${dir}.part-${process.pid}`;
   fs.rmSync(tmp, { recursive: true, force: true });
@@ -89,7 +161,7 @@ export async function ensureOpencode(
     const pct = total ? Math.floor((seen / total) * 100) : 0;
     if (pct !== lastPct) {
       lastPct = pct;
-      onProgress?.(pct);
+      onProgress?.(pct, seen, total);
     }
   });
 
@@ -125,12 +197,6 @@ export async function ensureOpencode(
     throw err;
   }
 
-  // Remove binaries of older versions to save disk space.
-  const root = path.join(storageDir, "opencode");
-  for (const name of fs.readdirSync(root)) {
-    if (path.join(root, name) !== dir && !name.includes(".part-")) {
-      fs.rmSync(path.join(root, name), { recursive: true, force: true });
-    }
-  }
+  cleanOldVersions(storageDir, pkg, dir);
   return bin;
 }

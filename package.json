@@ -2,7 +2,7 @@
   "name": "token-factory",
   "displayName": "Token Factory",
   "description": "Code / Cowork agent powered by opencode, preconfigured for FPT AI Factory. Paste your API key and start.",
-  "version": "0.1.2",
+  "version": "0.8.6",
   "publisher": "FPTAIFACTORY",
   "license": "MIT",
   "repository": {
@@ -12,6 +12,12 @@
   "icon": "media/icon.png",
   "engines": {
     "vscode": "^1.90.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "The agent runs the bundled opencode binary in the workspace folder, so a repository must be trusted first."
+    }
   },
   "categories": [
     "AI",
@@ -59,6 +65,10 @@
       {
         "command": "tokenFactory.signOut",
         "title": "Token Factory: Remove API key"
+      },
+      {
+        "command": "tokenFactory.showPaths",
+        "title": "Token Factory: Show data paths"
       }
     ],
     "keybindings": [
@@ -81,8 +91,32 @@
       "properties": {
         "tokenFactory.language": {
           "type": "string",
-          "enum": ["auto", "en", "vi", "ms", "ru", "ja"],
-          "enumDescriptions": ["Follow VS Code", "English", "Tiếng Việt", "Bahasa Melayu", "Русский", "日本語"],
+          "enum": [
+            "auto",
+            "en",
+            "vi",
+            "id",
+            "ms",
+            "ja",
+            "ko",
+            "zh-cn",
+            "es",
+            "pt-br",
+            "ru"
+          ],
+          "enumDescriptions": [
+            "Follow VS Code",
+            "English",
+            "Tiếng Việt",
+            "Bahasa Indonesia",
+            "Bahasa Melayu",
+            "日本語",
+            "한국어",
+            "简体中文",
+            "Español",
+            "Português (Brasil)",
+            "Русский"
+          ],
           "default": "auto",
           "description": "Language of the Token Factory panel."
         },
